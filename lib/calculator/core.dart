@@ -1,32 +1,30 @@
-import 'dart:collection';
-
 import 'package:decimal/decimal.dart';
-import 'package:decimal/intl.dart';
-import 'package:flutter/material.dart';
 
 // 计算核心逻辑
-class RateCalculatorModel extends ChangeNotifier {
+class RateCalculatorModel {
   final _PriceModel _model = _PriceModel();
 
   void changePretaxPrice(String pretaxPrice) {
     _model.setPretaxPrice(pretaxPrice);
     _model.afterTaxPrice =
-        _model.pretaxPrice * _model.taxRate + _model.pretaxPrice;
-    notifyListeners();
+        _countAfterTaxPrice(_model.pretaxPrice, _model.taxRate);
   }
 
   void changeAfterTaxPrice(String afterTaxPrice) {
     _model.setAfterTaxPrice(afterTaxPrice);
-    _model.pretaxPrice =
-        _model.pretaxPrice * _model.taxRate + _model.pretaxPrice;
-    notifyListeners();
+    var pretaxPriceRational =
+        _model.afterTaxPrice / (_model.taxRate + Decimal.one);
+    var pretaxPrice = Decimal.parse(pretaxPriceRational.toDouble().toString());
+    _model.pretaxPrice = pretaxPrice;
   }
 
+  /// 改变税率
+  /// <p>这里是税率单位是%,所以计算前需要先除100</p>
   void changeTaxRate(String taxRate) {
-    _model.setTaxRate(taxRate);
-    _model.pretaxPrice =
-        _countAfterTaxPrice(_model.pretaxPrice, _model._taxRate);
-    notifyListeners();
+    var rate = Decimal.parse(taxRate);
+    _model._taxRate = rate.shift(-2);
+    _model.afterTaxPrice =
+        _countAfterTaxPrice(_model.pretaxPrice, _model.taxRate);
   }
 
   Decimal _countAfterTaxPrice(Decimal pretaxPrice, Decimal taxRate) {
@@ -69,14 +67,27 @@ class _PriceModel {
   }
 
   void setTaxRate(String value) {
-    _taxRate = Decimal.parse(value);
+    if (value.isEmpty) {
+      _taxRate = Decimal.zero;
+    } else {
+      _taxRate = Decimal.parse(value);
+    }
   }
 
   void setPretaxPrice(String value) {
-    _pretaxPrice = Decimal.parse(value);
+    if (value.isEmpty) {
+      _pretaxPrice = Decimal.zero;
+    } else {
+      _pretaxPrice = Decimal.parse(value);
+    }
   }
 
   void setAfterTaxPrice(String value) {
-    _afterTaxPrice = Decimal.parse(value);
+    if (value.isEmpty) {
+      _afterTaxPrice = Decimal.zero;
+    } else {
+      _afterTaxPrice = Decimal.parse(value);
+      /**/
+    }
   }
 }
